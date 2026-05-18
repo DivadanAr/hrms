@@ -1,0 +1,197 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model absensi {
+  id_absensi  Int       @id @default(autoincrement())
+  tanggal     DateTime  @db.Date
+  jam_masuk   DateTime? @db.Time(0)
+  jam_pulang  DateTime? @db.Time(0)
+  lokasi      String?   @db.Text
+  id_karyawan Int
+  karyawan    karyawan  @relation(fields: [id_karyawan], references: [id_karyawan], onDelete: NoAction, onUpdate: NoAction, map: "absensi_ibfk_1")
+
+  @@index([id_karyawan], map: "id_karyawan")
+}
+
+model absensi_setting {
+  id                Int      @id @default(autoincrement())
+  normal_jam_masuk  DateTime @db.Time(0)
+  normal_jam_pulang DateTime @db.Time(0)
+}
+
+model departemen {
+  id_departemen   Int        @id @default(autoincrement())
+  nama_departemen String     @db.VarChar(100)
+  keterangan      String?    @db.Text
+  karyawan        karyawan[]
+}
+
+model detail_penggajian {
+  id_detail        Int           @id @default(autoincrement())
+  id_komponen_gaji Int
+  id_penggajian    Int
+  nominal          Decimal       @default(0.00) @db.Decimal(15, 2)
+  keterangan       String?       @db.Text
+  komponen_gaji    komponen_gaji @relation(fields: [id_komponen_gaji], references: [id_komponen_gaji], onDelete: NoAction, onUpdate: NoAction, map: "detail_penggajian_ibfk_1")
+  penggajian       penggajian    @relation(fields: [id_penggajian], references: [id_penggajian], onDelete: NoAction, onUpdate: NoAction, map: "detail_penggajian_ibfk_2")
+
+  @@index([id_komponen_gaji], map: "id_komponen_gaji")
+  @@index([id_penggajian], map: "id_penggajian")
+}
+
+model izin_karyawan {
+  id_izin           Int                      @id @default(autoincrement())
+  id_karyawan       Int
+  jenis_izin        izin_karyawan_jenis_izin
+  alasan            String?                  @db.Text
+  tanggal_pengajuan DateTime                 @default(now()) @db.DateTime(0)
+  tanggal_mulai     DateTime                 @db.DateTime(0)
+  tanggal_berakhir  DateTime                 @db.DateTime(0)
+  status            izin_karyawan_status     @default(pending)
+  aproved_by        Int?
+  karyawan          karyawan                 @relation(fields: [id_karyawan], references: [id_karyawan], onDelete: NoAction, onUpdate: NoAction, map: "izin_karyawan_ibfk_1")
+  user              user?                    @relation(fields: [aproved_by], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "izin_karyawan_ibfk_2")
+
+  @@index([aproved_by], map: "aproved_by")
+  @@index([id_karyawan], map: "id_karyawan")
+}
+
+model jabatan {
+  id_jabatan   Int        @id @default(autoincrement())
+  nama_jabatan String     @db.VarChar(100)
+  keterangan   String?    @db.Text
+  karyawan     karyawan[]
+}
+
+model karyawan {
+  id_karyawan        Int                    @id @default(autoincrement())
+  id_user            Int
+  nama               String                 @db.VarChar(255)
+  jenis_kelamin      karyawan_jenis_kelamin
+  alamat             String?                @db.Text
+  nip                String                 @unique(map: "nip") @db.VarChar(100)
+  no_rek             String?                @db.VarChar(100)
+  no_telp            String?                @db.VarChar(20)
+  status             karyawan_status        @default(aktif)
+  tanggal_masuk      DateTime               @db.Date
+  tanggal_keluar     DateTime?              @db.Date
+  id_jabatan         Int?
+  id_departemen      Int?
+  absensi            absensi[]
+  izin_karyawan      izin_karyawan[]
+  user               user                   @relation(fields: [id_user], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "karyawan_ibfk_1")
+  jabatan            jabatan?               @relation(fields: [id_jabatan], references: [id_jabatan], onDelete: NoAction, onUpdate: NoAction, map: "karyawan_ibfk_2")
+  departemen         departemen?            @relation(fields: [id_departemen], references: [id_departemen], onDelete: NoAction, onUpdate: NoAction, map: "karyawan_ibfk_3")
+  lembur_karyawan    lembur_karyawan[]
+  pengalokasian_gaji pengalokasian_gaji[]
+  penggajian         penggajian[]
+
+  @@index([id_departemen], map: "id_departemen")
+  @@index([id_jabatan], map: "id_jabatan")
+  @@index([id_user], map: "id_user")
+}
+
+model komponen_gaji {
+  id_komponen_gaji   Int                  @id @default(autoincrement())
+  nama_komponen_gaji String               @db.VarChar(255)
+  keterangan         String?              @db.Text
+  tipe               komponen_gaji_tipe
+  detail_penggajian  detail_penggajian[]
+  pengalokasian_gaji pengalokasian_gaji[]
+}
+
+model lembur_karyawan {
+  id_lembur        Int                    @id @default(autoincrement())
+  id_karyawan      Int
+  tanggal          DateTime               @db.DateTime(0)
+  total_jam_lembur Int
+  keterangan       String?                @db.Text
+  status           lembur_karyawan_status @default(pending)
+  aproved_by       Int?
+  karyawan         karyawan               @relation(fields: [id_karyawan], references: [id_karyawan], onDelete: NoAction, onUpdate: NoAction, map: "lembur_karyawan_ibfk_1")
+  user             user?                  @relation(fields: [aproved_by], references: [id_user], onDelete: NoAction, onUpdate: NoAction, map: "lembur_karyawan_ibfk_2")
+
+  @@index([aproved_by], map: "aproved_by")
+  @@index([id_karyawan], map: "id_karyawan")
+}
+
+model pengalokasian_gaji {
+  id_pengalokasian_gaji Int           @id @default(autoincrement())
+  id_komponen_gaji      Int
+  id_karyawan           Int
+  nominal               Decimal       @default(0.00) @db.Decimal(15, 2)
+  komponen_gaji         komponen_gaji @relation(fields: [id_komponen_gaji], references: [id_komponen_gaji], onDelete: NoAction, onUpdate: NoAction, map: "pengalokasian_gaji_ibfk_1")
+  karyawan              karyawan      @relation(fields: [id_karyawan], references: [id_karyawan], onDelete: NoAction, onUpdate: NoAction, map: "pengalokasian_gaji_ibfk_2")
+
+  @@index([id_karyawan], map: "id_karyawan")
+  @@index([id_komponen_gaji], map: "id_komponen_gaji")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model penggajian {
+  id_penggajian     Int                 @id @default(autoincrement())
+  id_karyawan       Int
+  periode           String              @db.VarChar(7)
+  total_pendapatan  Decimal             @default(0.00) @db.Decimal(15, 2)
+  total_potongan    Decimal             @default(0.00) @db.Decimal(15, 2)
+  gaji_bersih       Decimal             @default(0.00) @db.Decimal(15, 2)
+  detail_penggajian detail_penggajian[]
+  karyawan          karyawan            @relation(fields: [id_karyawan], references: [id_karyawan], onDelete: NoAction, onUpdate: NoAction, map: "penggajian_ibfk_1")
+
+  @@index([id_karyawan], map: "id_karyawan")
+}
+
+model user {
+  id_user         Int               @id @default(autoincrement())
+  email           String            @unique(map: "email") @db.VarChar(100)
+  password        String            @db.VarChar(255)
+  role            user_role         @default(EMPLOYEE)
+  izin_karyawan   izin_karyawan[]
+  karyawan        karyawan[]
+  lembur_karyawan lembur_karyawan[]
+}
+
+enum izin_karyawan_jenis_izin {
+  sakit
+  cuti
+  izin
+}
+
+enum komponen_gaji_tipe {
+  pendapatan
+  potongan
+}
+
+enum user_role {
+  HR
+  FINANCE
+  EMPLOYEE
+}
+
+enum karyawan_jenis_kelamin {
+  L
+  P
+}
+
+enum lembur_karyawan_status {
+  pending
+  ditolak
+  diterima
+}
+
+enum izin_karyawan_status {
+  pending
+  ditolak
+  diterima
+}
+
+enum karyawan_status {
+  aktif
+  nonaktif
+  resign
+}
