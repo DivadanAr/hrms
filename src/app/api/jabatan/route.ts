@@ -17,7 +17,7 @@ export async function GET() {
       ORDER BY j.id_jabatan DESC
     `;
 
-    const serializedData = data.map((item) => ({
+    const serializedData = (data as any[]).map((item) => ({
       ...item,
       jumlah_karyawan: Number(item.jumlah_karyawan),
     }));
