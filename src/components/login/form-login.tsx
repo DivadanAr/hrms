@@ -11,7 +11,7 @@ import {
 
 import { useState } from "react";
 
-import { isIOS, isMobile } from "react-device-detect";
+import { isDesktop, isIOS, isMobile } from "react-device-detect";
 
 import { useRouter } from "next/navigation";
 
@@ -181,8 +181,7 @@ export default function FormLogin() {
             </h1>
 
             <p className="mt-4 text-gray-500">
-              Login to continue using the
-              website.
+              {(isDesktop == true) ? `Manage attendance, payroll, employee performance and more in one dashboard.` : 'Login to continue using the website.' }
             </p>
           </div>
 
