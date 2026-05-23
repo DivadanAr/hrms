@@ -53,13 +53,11 @@ export async function POST(req: NextRequest) {
           success: false,
           message: "tanggal dan id_karyawan wajib diisi",
         },
-        {
-          status: 400,
-        },
+        { status: 400 },
       );
     }
 
-    // cek apakah hari ini sudah absen
+    // Cek apakah hari ini sudah absen
     const check: any = await prisma.$queryRawUnsafe(
       `
       SELECT
@@ -76,7 +74,7 @@ export async function POST(req: NextRequest) {
       Number(id_karyawan),
     );
 
-    // jika belum ada -> insert absensi masuk
+    // Jika belum ada → insert absensi masuk
     if (check.length === 0) {
       await prisma.$executeRawUnsafe(
         `
@@ -103,7 +101,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // jika sudah ada -> update jam pulang
+    // Jika sudah ada → update jam pulang
     await prisma.$executeRawUnsafe(
       `
       UPDATE absensi
@@ -121,16 +119,14 @@ export async function POST(req: NextRequest) {
       message: "Absensi pulang berhasil",
     });
   } catch (error: any) {
-    console.log(error);
+    console.error(error);
 
     return NextResponse.json(
       {
         success: false,
         message: error.message || "Gagal menyimpan absensi",
       },
-      {
-        status: 500,
-      },
+      { status: 500 },
     );
   }
 }

@@ -1,7 +1,15 @@
 import FormLogin from "@/components/login/form-login";
-import {  Leaf } from "lucide-react";
+import { getCookie } from "@/context/cookie";
+import { Leaf } from "lucide-react";
+import { redirect } from "next/navigation";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const incomeCookie = await getCookie("__vxu_KeySid");
+  const outcomeCookie = await getCookie("__vxu_meta-Us");
+  if (incomeCookie && outcomeCookie) {
+    redirect("/");
+  }
+
   return (
     <main className="min-h-screen bg-[#F7F8FA] md:p-0 p-2">
       <div className="grid min-h-screen lg:grid-cols-2">
@@ -100,7 +108,7 @@ export default function LoginPage() {
         </div>
 
         {/* RIGHT SIDE */}
-        <FormLogin/>
+        <FormLogin />
       </div>
     </main>
   );

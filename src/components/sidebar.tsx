@@ -4,31 +4,44 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-
 import {
   CalendarCheck,
-  CalendarDays,
   ChevronDown,
   ChevronRight,
-  CircleHelp,
   LayoutDashboard,
-  Settings,
   Blocks,
   Wallet,
   X,
-  BriefcaseBusiness,
-  UserRoundPlus,
   ClockAlert,
   FileUser,
 } from "lucide-react";
-import { url } from "inspector";
 
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (value: boolean) => void;
+  role: string; // ← tambah prop role
 }
 
-const menus = [
+type ChildItem = {
+  name: string;
+  href: string;
+  allowedRoles?: string[];
+};
+
+type MenuItem = {
+  name: string;
+  href?: string;
+  icon: React.ElementType;
+  allowedRoles?: string[];
+  children?: ChildItem[];
+};
+
+type MenuSection = {
+  title: string;
+  items: MenuItem[];
+};
+
+const menus: MenuSection[] = [
   {
     title: "GENERAL",
     items: [
@@ -36,36 +49,40 @@ const menus = [
         name: "Overview",
         href: "/",
         icon: LayoutDashboard,
+        // tidak ada allowedRoles = semua role boleh
       },
       {
         name: "Absensi",
         icon: CalendarCheck,
+        allowedRoles: ["HR", "ADMIN"],
         children: [
           {
             name: "Absensi Harian",
             href: "/absensi/harian",
+            allowedRoles: ["HR", "ADMIN"],
           },
           {
             name: "Absensi Bulanan",
             href: "/absensi/bulanan",
+            allowedRoles: ["HR", "ADMIN"],
           },
         ],
       },
       {
         name: "Resource",
         icon: Blocks,
+        allowedRoles: ["HR", "ADMIN"],
         children: [
           {
             name: "Departemen",
             href: "/departemen",
+            allowedRoles: ["HR", "ADMIN"],
           },
-          {
-            name: "Jabatan",
-            href: "/jabatan",
-          },
+          { name: "Jabatan", href: "/jabatan", allowedRoles: ["HR", "ADMIN"] },
           {
             name: "Karyawan",
             href: "/karyawan",
+            allowedRoles: ["HR", "ADMIN"],
           },
         ],
       },
@@ -73,86 +90,51 @@ const menus = [
         name: "Izin Karyawan",
         icon: FileUser,
         href: "/izin",
+        allowedRoles: ["HR", "ADMIN"],
       },
       {
         name: "Lembur Karyawan",
         icon: ClockAlert,
         href: "/lembur",
+        allowedRoles: ["HR", "ADMIN"],
       },
       {
         name: "Payroll",
         icon: Wallet,
+        allowedRoles: ["FINANCE", "ADMIN"],
         children: [
           {
             name: "Komponen Gaji",
             href: "/komponen-gaji",
+            allowedRoles: ["FINANCE", "ADMIN"],
           },
           {
             name: "Pengalokasian Gaji",
             href: "/pengalokasian-gaji",
+            allowedRoles: ["FINANCE", "ADMIN"],
           },
           {
             name: "Penggajian",
             href: "/penggajian",
+            allowedRoles: ["FINANCE", "ADMIN"],
           },
         ],
       },
     ],
   },
-
-  //   {
-  //     title: "MANAGEMENT",
-  //     items: [
-  //       {
-  //         name: "Jobs",
-  //         icon: BriefcaseBusiness,
-  //         children: [
-  //           {
-  //             name: "Job List",
-  //             href: "/dashboard/jobs",
-  //           },
-  //           {
-  //             name: "Create Job",
-  //             href: "/dashboard/jobs/create",
-  //           },
-  //         ],
-  //       },
-
-  //       {
-  //         name: "Candidate",
-  //         href: "/dashboard/candidate",
-  //         icon: UserRoundPlus,
-  //       },
-
-  //       {
-  //         name: "Calendar",
-  //         href: "/dashboard/calendar",
-  //         icon: CalendarDays,
-  //       },
-  //     ],
-  //   },
-
-  //   {
-  //     title: "SUPPORT",
-  //     items: [
-  //       {
-  //         name: "Help Center",
-  //         href: "/dashboard/help-center",
-  //         icon: CircleHelp,
-  //       },
-
-  //       {
-  //         name: "Settings",
-  //         href: "/dashboard/settings",
-  //         icon: Settings,
-  //       },
-  //     ],
-  //   },
 ];
 
-export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
-  const pathname = usePathname();
+function canAccess(allowedRoles: string[] | undefined, role: string): boolean {
+  if (!allowedRoles) return true;
+  return allowedRoles.includes(role);
+}
 
+export default function Sidebar({
+  sidebarOpen,
+  setSidebarOpen,
+  role,
+}: SidebarProps) {
+  const pathname = usePathname();
   const [openMenu, setOpenMenu] = useState<string | null>("");
 
   const toggleMenu = (menu: string) => {
@@ -171,11 +153,8 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 font-bold text-white">
             W
           </div>
-
           <h1 className="text-2xl font-bold text-gray-800">WorkSphere</h1>
         </div>
-
-        {/* Close Mobile */}
         <button onClick={() => setSidebarOpen(false)} className="lg:hidden">
           <X size={20} />
         </button>
@@ -190,75 +169,79 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }: SidebarProps) {
             </p>
 
             <div className="space-y-1">
-              {section.items.map((item) => {
-                const Icon = item.icon;
+              {section.items
+                .filter((item) => canAccess(item.allowedRoles, role))
+                .map((item) => {
+                  const Icon = item.icon;
+                  const accessibleChildren = item.children?.filter((child) =>
+                    canAccess(child.allowedRoles, role),
+                  );
+                  const isParentActive =
+                    accessibleChildren?.some(
+                      (child) => child.href === pathname,
+                    ) || item.href === pathname;
 
-                const isParentActive =
-                  item.children?.some((child) => child.href === pathname) ||
-                  item.href === pathname;
-
-                return (
-                  <div key={item.name}>
-                    {/* Parent Menu */}
-                    {item.children ? (
-                      <button
-                        onClick={() => toggleMenu(item.name)}
-                        className={`flex w-full items-center justify-between rounded-xl px-3 py-3 transition-all ${
-                          isParentActive
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "text-gray-600 hover:bg-gray-100"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
+                  return (
+                    <div key={item.name}>
+                      {accessibleChildren && accessibleChildren.length > 0 ? (
+                        <button
+                          onClick={() => toggleMenu(item.name)}
+                          className={`flex w-full items-center justify-between rounded-xl px-3 py-3 transition-all ${
+                            isParentActive
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "text-gray-600 hover:bg-gray-100"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <Icon size={18} />
+                            <span className="text-sm font-medium">
+                              {item.name}
+                            </span>
+                          </div>
+                          {openMenu === item.name ? (
+                            <ChevronDown size={18} />
+                          ) : (
+                            <ChevronRight size={18} />
+                          )}
+                        </button>
+                      ) : item.href ? (
+                        <Link
+                          href={item.href}
+                          className={`flex items-center gap-3 rounded-xl px-3 py-3 transition-all ${
+                            pathname === item.href
+                              ? "bg-emerald-50 text-emerald-600"
+                              : "text-gray-600 hover:bg-gray-100"
+                          }`}
+                        >
                           <Icon size={18} />
-
                           <span className="text-sm font-medium">
                             {item.name}
                           </span>
-                        </div>
+                        </Link>
+                      ) : null}
 
-                        {openMenu === item.name ? (
-                          <ChevronDown size={18} />
-                        ) : (
-                          <ChevronRight size={18} />
+                      {accessibleChildren &&
+                        accessibleChildren.length > 0 &&
+                        openMenu === item.name && (
+                          <div className="ml-6 mt-1 space-y-1 border-l border-gray-200 pl-4">
+                            {accessibleChildren.map((child) => (
+                              <Link
+                                key={child.href}
+                                href={child.href}
+                                className={`block rounded-lg px-3 py-2 text-sm transition-all ${
+                                  pathname === child.href
+                                    ? "bg-emerald-100 font-medium text-emerald-600"
+                                    : "text-gray-500 hover:bg-gray-100"
+                                }`}
+                              >
+                                {child.name}
+                              </Link>
+                            ))}
+                          </div>
                         )}
-                      </button>
-                    ) : (
-                      <Link
-                        href={item.href!}
-                        className={`flex items-center gap-3 rounded-xl px-3 py-3 transition-all ${
-                          pathname === item.href
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "text-gray-600 hover:bg-gray-100"
-                        }`}
-                      >
-                        <Icon size={18} />
-
-                        <span className="text-sm font-medium">{item.name}</span>
-                      </Link>
-                    )}
-
-                    {/* Sub Menu */}
-                    {item.children && openMenu === item.name && (
-                      <div className="mt-1 ml-6 space-y-1 border-l border-gray-200 pl-4">
-                        {item.children.map((child) => (
-                          <Link
-                            key={child.href}
-                            href={child.href}
-                            className={`block rounded-lg px-3 py-2 text-sm transition-all ${
-                              pathname === child.href
-                                ? "bg-emerald-100 font-medium text-emerald-600"
-                                : "text-gray-500 hover:bg-gray-100"
-                            }`}
-                          >
-                            {child.name}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                    </div>
+                  );
+                })}
             </div>
           </div>
         ))}

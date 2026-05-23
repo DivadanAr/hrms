@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {prisma} from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
           success: false,
           message: "Email dan password wajib diisi",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         u.email,
         u.password,
         u.role,
-
+        k.id_karyawan,
         k.nama,
         d.nama_departemen,
         j.nama_jabatan
@@ -55,15 +55,12 @@ export async function POST(req: NextRequest) {
           success: false,
           message: "Email tidak ditemukan",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     // Compare password
-    const isPasswordValid = await bcrypt.compare(
-      password,
-      user.password
-    );
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
       return NextResponse.json(
@@ -71,7 +68,7 @@ export async function POST(req: NextRequest) {
           success: false,
           message: "Password salah",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -80,7 +77,7 @@ export async function POST(req: NextRequest) {
       id_user: user.id_user,
       email: user.email,
       role: user.role,
-
+      id_karyawan: user.id_karyawan,
       nama: user.nama,
       departemen: user.nama_departemen,
       jabatan: user.nama_jabatan,
@@ -89,13 +86,9 @@ export async function POST(req: NextRequest) {
     };
 
     // Generate token
-    const token = jwt.sign(
-      payload,
-      process.env.JWT_SECRET as string,
-      {
-        expiresIn: "7d",
-      }
-    );
+    const token = jwt.sign(payload, process.env.JWT_SECRET as string, {
+      expiresIn: "7d",
+    });
 
     // Response
     const response = NextResponse.json({
@@ -106,13 +99,13 @@ export async function POST(req: NextRequest) {
     });
 
     // Simpan cookies
-    response.cookies.set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-    });
+    // response.cookies.set("token", token, {
+    //   httpOnly: true,
+    //   secure: process.env.NODE_ENV === "production",
+    //   sameSite: "strict",
+    //   path: "/",
+    //   maxAge: 60 * 60 * 24 * 7,
+    // });
 
     return response;
   } catch (error) {
@@ -123,7 +116,7 @@ export async function POST(req: NextRequest) {
         success: false,
         message: "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
