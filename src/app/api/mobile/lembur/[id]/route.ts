@@ -24,11 +24,16 @@ async function getLembur(id_lembur: number, id_karyawan: number) {
 
 // ─── PUT /api/mobile/lembur/[id] ─────────────────────────────────────────────
 
-export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+type Params = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
+export async function PUT(req: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
+
     const id_karyawan = await getIdKaryawan();
     if (!id_karyawan)
       return NextResponse.json(
@@ -36,7 +41,7 @@ export async function PUT(
         { status: 401 },
       );
 
-    const id_lembur = Number(params.id);
+    const id_lembur = Number(id);
     const lembur = await getLembur(id_lembur, id_karyawan);
 
     if (!lembur)
@@ -94,11 +99,9 @@ export async function PUT(
 
 // ─── DELETE /api/mobile/lembur/[id] ──────────────────────────────────────────
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_req: NextRequest, { params }: Params) {
   try {
+    const { id } = await params;
     const id_karyawan = await getIdKaryawan();
     if (!id_karyawan)
       return NextResponse.json(
@@ -106,7 +109,7 @@ export async function DELETE(
         { status: 401 },
       );
 
-    const id_lembur = Number(params.id);
+    const id_lembur = Number(id);
     const lembur = await getLembur(id_lembur, id_karyawan);
 
     if (!lembur)
