@@ -122,18 +122,12 @@ export default function FormLogin() {
 
       toast.success("Login berhasil");
 
-      if (
-        JSON.stringify(isMobile) == "true" ||
-        JSON.stringify(isIOS) == "true"
-      ) {
-        setTimeout(() => {
-          router.push("/mobile/home");
-        }, 1000);
-      } else {
-        setTimeout(() => {
-          router.push("/");
-        }, 1000);
-      }
+      setTimeout(() => {
+        const isMobileDevice =
+          JSON.stringify(isMobile) == "true" || JSON.stringify(isIOS) == "true";
+
+        window.location.href = isMobileDevice ? "/mobile/home" : "/";
+      }, 1000);
     } catch (error) {
       console.log(error);
 
